@@ -35,5 +35,4 @@ class NodeProject:
         self.__manager.setup(self.__packages)
 
     def run_binary(self, binary: str, *args):
-        self.__manager.run_binary(binary, *args)
-        return 0
+        return self.__manager.run_binary(binary, *args)

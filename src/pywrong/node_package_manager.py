@@ -1,6 +1,6 @@
 from pathlib import Path
 from shutil import which
-from subprocess import DEVNULL, Popen
+from subprocess import DEVNULL, Popen, run
 from typing import List, Literal, Optional, get_args
 
 from pywrong.node_package import NodePackage
@@ -94,4 +94,4 @@ class NodePackageManager:
         self.__install(packages)
 
     def run_binary(self, binary: str, *args):
-        run_command(self.__manager_binary, self.__cwd, [binary, *args])
+        return run([self.__manager_binary, binary, *args], cwd=self.__cwd)

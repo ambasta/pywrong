@@ -13,4 +13,5 @@ def serve() -> int:
         project = NodeProject(tmpdir_path)
         project.add_package('pyright', unplug=True)
         project.setup()
-        return project.run_binary('pyright-langserver', *args)
+        process = project.run_binary('pyright-langserver', *args)
+        return process.returncode
