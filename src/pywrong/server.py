@@ -1,2 +1,16 @@
+from pathlib import Path
+from sys import argv
+from tempfile import TemporaryDirectory
+
+from pywrong.node_project import NodeProject
+
+
 def serve() -> int:
-    pass
+    args = argv[1:]
+
+    with TemporaryDirectory() as tmpdir:
+        tmpdir_path = Path(tmpdir)
+        project = NodeProject(tmpdir_path)
+        project.add_package('pyright', unplug=True)
+        project.setup()
+        return project.run_binary('pyright-langserver', *args)

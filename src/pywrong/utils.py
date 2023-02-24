@@ -19,4 +19,6 @@ def to_underscore_case(data: Any, convert: bool = True) -> Any:
 
         if ret_val.startswith('_'):
             ret_val = ret_val[1:]
+    else:
+        ret_val = data
     return ret_val

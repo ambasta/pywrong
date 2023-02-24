@@ -11,15 +11,17 @@ from pywrong.nodejs import NodeJS
 class NodeProject:
     __node_js: NodeJS
     __cwd: Path
-    __packages: List[NodePackage]
+    __packages: List[NodePackage] = []
     __manager: NodePackageManager
 
     def __init__(self, cwd: Path) -> None:
         self.__node_js = NodeJS(cwd)
         self.__cwd = cwd
 
-    def add_packages(self, packageNames: List[str]):
-        self.__packages = [NodePackage(packageName) for packageName in packageNames]
+    def add_package(
+        self, packageName: str, version: Optional[str] = None, unplug: bool = False
+    ):
+        self.__packages.append(NodePackage(packageName, version=version, unplug=unplug))
 
     def setup(self, manager: Optional[str] = None):
         node_versions = [
@@ -31,3 +33,7 @@ class NodeProject:
             self.__node_js.binary.parent, self.__cwd, manager
         )
         self.__manager.setup(self.__packages)
+
+    def run_binary(self, binary: str, *args):
+        self.__manager.run_binary(binary, *args)
+        return 0

@@ -108,7 +108,13 @@ class NodeJS:
         if node_bin_path:
             node_bin_version = check_output([node_bin_path, '--version'])[:-1].decode()
 
-            if spec.match(node_bin_version):
+            if spec.match(
+                Version(
+                    node_bin_version[1:]
+                    if node_bin_version.startswith('v')
+                    else node_bin_version
+                )
+            ):
                 self.__node_path = Path(node_bin_path)
                 return True
         return False

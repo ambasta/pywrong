@@ -8,15 +8,20 @@ from pywrong.node_package import NodePackage
 Manager = Literal['yarn'] | Literal['npm'] | Literal['pnpm']
 
 
-def run_command(cmd: Path, cwd: Path, *args):
-    with Popen([cmd, *args], cwd=cwd, stdout=DEVNULL, stderr=DEVNULL) as process:
+def run_command(cmd: Path, cwd: Path, args: List[str | Path]):
+    arguments: List[Path | str] = [cmd]
+
+    for arg in list(args):
+        arguments.append(arg)
+
+    with Popen(arguments, cwd=cwd, stdout=DEVNULL, stderr=DEVNULL) as process:
         process.wait()
 
 
 class NodePackageManager:
     __cwd: Path
     __bin_path: Path
-    __manager: str
+    __manager: Optional[str] = None
     __manager_binary: Path
 
     def __init__(
@@ -30,11 +35,13 @@ class NodePackageManager:
 
     def __detect_managers(self):
         try:
-            self.__manager_binary = next(
-                manager
-                for literals in get_args(Manager)
-                for manager in get_args(literals)
-                if which(manager, path=self.__bin_path)
+            self.__manager_binary = Path(
+                next(
+                    manager
+                    for literals in get_args(Manager)
+                    for manager in get_args(literals)
+                    if which(manager, path=self.__bin_path)
+                )
             )
             self.__manager = self.__manager_binary.name
         except StopIteration:
@@ -48,20 +55,28 @@ class NodePackageManager:
         run_command(self.__manager_binary, self.__cwd, ['init', '-y'])
 
     def __initialize(self):
+        assert self.__manager is not None
+
         if self.__manager.startswith('yarn'):
             self.__setup_yarn()
         else:
             self.__setup_npmlike()
 
-    def __install(self, packages: List[str]):
+    def __install(self, packages: List[NodePackage]):
         install_command: str = (
             'add' if self.__manager_binary.name.startswith('yarn') else 'install'
         )
         run_command(
             self.__manager_binary,
             self.__cwd,
-            [install_command, *packages],
+            [install_command, *[pkg.name for pkg in packages]],
         )
+
+        unplug_pkgs = list(
+            map(lambda pkg: pkg.name, filter(lambda pkg: pkg.unplug, packages))
+        )
+
+        run_command(self.__manager_binary, self.__cwd, ['unplug', *unplug_pkgs])
         run_command(self.__manager_binary, self.__cwd, ['install'])
 
     def setup(self, packages: List[NodePackage]):
@@ -76,4 +91,7 @@ class NodePackageManager:
             self.__detect_managers()
 
         self.__initialize()
-        self.__install([pkg.name for pkg in packages])
+        self.__install(packages)
+
+    def run_binary(self, binary: str, *args):
+        run_command(self.__manager_binary, self.__cwd, [binary, *args])
